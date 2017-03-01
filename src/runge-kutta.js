@@ -17,15 +17,15 @@ function rk4DS(x, b, h, arrY, funcs) {
         res: pres.slice()
     });
     while (x < b) {
-        funcs.forEach(function (el, i) {
+        funcs.forEach(function(el, i) {
             nres[i] = rk4(pres[i], x, h, el);
         });
+        x = (x + h).toFixed(2) - 0;
         results.push({
             x: x,
             res: nres.slice()
         });
         pres = nres.slice();
-        x += h;
     }
     return results;
 }
@@ -34,53 +34,79 @@ function f(x, y) {
     return y / x + x * x;
 }
 
-///PLOT
 
-Plotly.d3.csv('https://raw.githubusercontent.com/plotly/datasets/master/3d-line1.csv', function (err, rows) {
-    function unpack(rows, key) {
-        return rows.map(function (row) {
-            return row[key];
-        });
+
+
+
+
+function calc(X1, Y1, Z1, T1, h, _iterations) {
+    var arr = [],
+        _sigma = 10,
+        _rho = 28,
+        _beta = 2;
+
+
+    function CalculateLorenzIComponent(x, y, t) {
+        return t * ((-_sigma * x) + (_sigma * y));
     }
-    var x = unpack(rows, 'x');
-    var y = unpack(rows, 'y');
-    var z = unpack(rows, 'z');
-    var c = unpack(rows, 'color');
 
-    var tmp = rk4DS(1, 2.5, 0.1, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [f, f, f, f, f, f, f, f, f, f, f, f]);
-    console.log(x,y,z);
+    function CalculateLorenzJComponent(x, y, z, t) {
+        return t * ((_rho * x) - y - (x * z));
+    }
 
-    var x = tmp.map(function (el) {
-            return Array(el.res.length).fill(el.x);
-        }).reduce(function(prev, next) {
-        	return prev.concat(next);
-        }, []),
-    	y = tmp.map(function (el) {
-            return el.res;
-        }).reduce(function(prev, next) {
-        	return prev.concat(next);
-        }, []),
-        z = tmp.map(function (el) {
-            return Array(el.res.length).fill(0);
-        }).reduce(function(prev, next) {
-        	return prev.concat(next);
-        }, []);
-    console.log(x,y,z);
+    function CalculateLorenzKComponent(x, y, z, t) {
+        return t * ((x * y) - (_beta * z));
+    }
+    for (var n = 0; n < _iterations; n++) {
 
+        var
+            I1 = 0,
+            I2 = 0,
+            I3 = 0,
+            J1 = 0,
+            J2 = 0,
+            J3 = 0,
+            K1 = 0,
+            K2 = 0,
+            K3 = 0;
+        //приближение 1-го порядка
+        I1 = CalculateLorenzIComponent(X1, Y1, T1);
+        J1 = CalculateLorenzJComponent(X1, Y1, Z1, T1);
+        K1 = CalculateLorenzKComponent(X1, Y1, Z1, T1);
 
-    Plotly.plot('myDiv', [{
-        type: 'scatter3d',
-        mode: 'lines',
-        x: x,
-        y: y,
-        z: z,
-        opacity: 1,
-        line: {
-            width: 6,
-            //color: c,
-            reversescale: false
-        }
-    }], {
-        height: 640
-    });
-});
+        //приближение 2-го порядка
+        I2 = CalculateLorenzIComponent(X1 + (h / 2) * I1, Y1 + (h / 2) * J1, T1 + (h / 2));
+        J2 = CalculateLorenzJComponent(X1 + (h / 2) *
+            I1, Y1 + (h / 2) * J1, Z1 + (h / 2) * K1, T1 + h / 2);
+        K2 = CalculateLorenzKComponent(X1 + (h / 2) *
+            I1, Y1 + (h / 2) * J1, Z1 + (h / 2) * K1, T1 + (h / 2));
+
+        //приближение 3-го порядка
+        I3 = CalculateLorenzIComponent(X1 + (h / 2) * I2, Y1 + (h / 2) * J2, T1 + h / 2);
+        J3 = CalculateLorenzJComponent(X1 + (h / 2) *
+            I2, Y1 + (h / 2) * J2, Z1 + (h / 2) * K1, T1 + (h / 2));
+        K3 = CalculateLorenzKComponent(X1 + (h / 2) *
+            I2, X1 + (h / 2) * J2, Z1 + (h / 2) * K1, T1 + (h / 2));
+
+        //приближение 4-го порядка
+        I4 = CalculateLorenzIComponent(X1 + (h / 2) * I3, Y1 + (h / 2) * J3, T1 + (h / 2));
+        J4 = CalculateLorenzJComponent(X1 + (h / 2) *
+            I3, Y1 + (h / 2) * J3, Z1 + (h / 2) * K1, T1 + (h / 2));
+        K4 = CalculateLorenzKComponent(X1 + (h / 2) *
+            I3, X1 + (h / 2) * J3, Z1 + (h / 2) * K1, T1 + (h / 2));
+
+        //Расширение ряда Тейлора в 3-х размерностях
+        var X2 = X1 + (h / 6) * (I1 + 2 * I2 + 2 * I3 + I4);
+        var Y2 = Y1 + (h / 6) * (J1 + 2 * J2 + 2 * J3 + J4);
+        var Z2 = Z1 + (h / 6) * (K1 + 2 * K2 + 2 * K3 + J4);
+
+        X1 = X2;
+        Y1 = Y2;
+        Z1 = Z2;
+        arr.push({ x: X1, y: Y1, z: Z1 });
+    }
+    return arr;
+}
+
+//X1, Y1, Z1, T1, h, _iterations
+console.log(calc(20, 20, 20, 0.1, 0.2, 2500))
