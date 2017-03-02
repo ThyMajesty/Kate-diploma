@@ -1,157 +1,118 @@
 <head>
-<!-- Plotly.js -->
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Plotly.js -->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
+
 <body>
-<!-- Plotly chart will be drawn inside this DIV -->
-<div id="myDiv" style="width:100%;height:100%"></div>
-<script src="functions.js"></script>
-<script src="runge-kutta.js"></script>
-<script src="plot.js"></script>
-<script src="runge_cutta(limited_edition).js"></script>
+    <form class="col-md-3 form-horizontal">
+        <div class="col-md-12">
+            <h3>Параметри Системи </h3>
+            <div class="form-group">
+                <label for="input_sigma" class="control-label col-xs-2">Sigma</label>
+                <div class="col-xs-10">
+                    <input type="text" class="form-control " name="input_sigma" id="input_sigma" placeholder="Sigma" value="10">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="input_rho" class="control-label col-xs-2">Rho</label>
+                <div class="col-xs-10">
+                    <input type="text" class="form-control " name="input_rho" id="input_rho" placeholder="Rho" value="28">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="input_beta" class="control-label col-xs-2">Beta</label>
+                <div class="col-xs-10">
+                    <input type="text" class="form-control " name="input_beta" id="input_beta" placeholder="Beta" value="2">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <!-- <div class="col-md-12"> -->
+            <h3>Кроки чисельного iнтегрування</h3>
+            <div class="pull-right">
+                <!-- <div class="col-md-2 pull-right">
+                    -
+                    </div> -->
+                <div class="form-group col-md-6 pull-right">
+                    <label for="input_iterations" class="control-label">Кiнцева</label>
+                    <input type="text" class="form-control " name="input_iterations" id="input_iterations" placeholder="Iterations" value="2500">
+                </div>
+                <div class="form-group col-md-6 pull-right">
+                    <label for="input_iterations" class="control-label">Початкова</label>
+                    <input type="text" class="form-control " name="input_iterations_start" id="input_iterations_start" placeholder="Iterations" value="0">
+                </div>
+            </div>
+            <!-- </div> -->
+        </div>
+        <div class="col-md-12">
+            <h3>Початковi Умови </h3>
+            <div class="form-group">
+                <label for="input_x" class="control-label col-xs-2">X</label>
+                <div class="col-xs-10">
+                    <input type="text" class="form-control " name="input_x" id="input_x" placeholder="X" value="20">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="input_y" class="control-label col-xs-2">Y</label>
+                <div class="col-xs-10">
+                    <input type="text" class="form-control " name="input_y" id="input_y" placeholder="Y" value="20">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="input_z" class="control-label col-xs-2">Z</label>
+                <div class="col-xs-10">
+                    <input type="text" class="form-control " name="input_z" id="input_z" placeholder="Z" value="20">
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <h3>Побудувати</h3>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" id="phasePortrait" checked="checked" value="phasePortrait">Фазовий Портрет</label>
+            </div>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" id="sLHP" value="sLHP">sLHP</label>
+            </div>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" id="LHPSpectre" value="LHPSpectre">LHPSpectre</label>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <h3>Iншi Налаштування </h3>
+            <div class="form-group">
+                <label for="input_t" class="control-label col-xs-2">T</label>
+                <div class="col-xs-10">
+                    <input type="text" class="form-control " name="input_t" id="input_t" placeholder="T" value="0.1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="input_count" class="control-label col-xs-2">Кiлькiсть крокiв</label>
+                <div class="col-xs-10">
+                    <input type="text" class="form-control " name="input_count" id="input_count" placeholder="Кiлькiсть крокiв" value="25000">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="input_h" class="control-label col-xs-2">Точнiсть Обчислень</label>
+                <div class="col-xs-10">
+                    <input type="text" class="form-control " name="input_h" id="input_h" placeholder="Точнiсть Обчислень" value="0.1">
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-default">Побудувати</button>
+        <button class="btn btn-default">Зберегти</button>
+    </form>
+    <!-- Plotly chart will be drawn inside this DIV -->
+    <div id="myDiv" class="col-md-9"></div>
+    <script src="runge-kutta.3d.js"></script>
+    <script src="plot.js"></script>
+    <script src="methods.js"></script>
+    <script src="view.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 </body>
-
-
-<!-- <!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-body{
-  font-family: sans;
-  padding: 10px;
-}
-svg path{
-  stroke: #000;
-  stroke-width: 1px;
-  stroke: rgba(0,0,0,0.2);
-}
-svg{
-  border: 1px solid #DED8BF;
-  background-color: #f4f4d9;
-  width: 700px;
-  height: 400px;
-}
-h1{
-  font-weight: normal;
-  margin: 0;
-  padding-left: 5px;
-  color: #53483e;
-}
-p{
-  margin: 0;
-  margin-bottom: 10px;
-  padding-left: 5px;
-  color: #917e6b;
-}
-ul{
-  width: 200px;
-  float: left;
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  padding-right: 10px;
-}
-li{
-  cursor: pointer;
-  background-color: #c8ad93;
-  padding: 10px;
-  margin: 2px;
-  color: #fff;
-}
-</style>
-</head>
-<body>
-  <h1>D3.js Surface Plots</h1>
-  <p>Drag graph to change view</p>
-  <script src="http://d3js.org/d3.v3.min.js"></script>
-  <script src="3d.js"></script>
-  <script src="runge-kutta. logic.js"></script>
-  <script>
-  var yaw=0.5,pitch=0.5, width=700, height=400, drag=false;
-
-  function dataFromFormular(func){
-    var output=[];
-    for(var x=-20;x<20;x++){
-      var f0=[];            
-      output.push(f0);
-      for(var y=-20;y<20;y++){
-          f0.push(func(x,y));
-      }
-    }
-    return output;
-  }
-
-  var surfaces=[
-    {
-      name: 'Dataset 1',
-      data: dataFromFormular(function(x,y){
-          return Math.sin(Math.sqrt(x*x+y*y)/5*Math.PI)*50;
-        })
-    },
-    {
-      name: 'Dataset 2',
-      data: dataFromFormular(function(x,y){
-          return Math.cos(x/15*Math.PI)*Math.cos(y/15*Math.PI)*60+Math.cos(x/8*Math.PI)*Math.cos(y/10*Math.PI)*40;
-        })
-    },
-    {
-      name: 'Dataset 3',
-      data: dataFromFormular(function(x,y){
-          return -(Math.cos(Math.sqrt(x*x+y*y)/6*Math.PI)+1)*300/(Math.pow(x*x+y*y+1,0.3)+1)+50;
-        })
-    }
-  ];
-  var selected=surfaces[0];
-
-  var ul=d3.select('body')
-           .append('ul');
-  var svg=d3.select('body')
-          .append('svg')
-            .attr('height',height)
-            .attr('width',width);
-
-  var group = svg.append("g");
-
-  var md=group.data([surfaces[0].data])
-    .surface3D(width,height)
-      .surfaceHeight(function(d){ 
-        return d;
-      }).surfaceColor(function(d){
-        var c=d3.hsl((d+100), 0.6, 0.5).rgb();
-        return "rgb("+parseInt(c.r)+","+parseInt(c.g)+","+parseInt(c.b)+")";
-      });
-
-  ul.selectAll('li')
-    .data(surfaces)
-      .enter().append('li')
-        .html(function(d){
-          return d.name
-        }).on('mousedown',function(){
-          md.data([d3.select(this).datum().data]).surface3D()
-            .transition().duration(500)
-            .surfaceHeight(function(d){
-              return d;
-            }).surfaceColor(function(d){
-              var c=d3.hsl((d+100), 0.6, 0.5).rgb();
-              return "rgb("+parseInt(c.r)+","+parseInt(c.g)+","+parseInt(c.b)+")";
-            });
-        });
-
-  svg.on("mousedown",function(){
-    drag=[d3.mouse(this),yaw,pitch];
-  }).on("mouseup",function(){
-    drag=false;
-  }).on("mousemove",function(){
-    if(drag){            
-      var mouse=d3.mouse(this);
-      yaw=drag[1]-(mouse[0]-drag[0][0])/50;
-      pitch=drag[2]+(mouse[1]-drag[0][1])/50;
-      pitch=Math.max(-Math.PI/2,Math.min(Math.PI/2,pitch));
-      md.turntable(yaw,pitch);
-    }
-  });
-  
-  </script>
-</body>
-</html> -->
