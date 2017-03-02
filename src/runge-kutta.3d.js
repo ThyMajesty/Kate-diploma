@@ -1,19 +1,25 @@
 class RungeKutta4 {
-    constructor(_sigma = 10, _rho = 28, _beta = 2) {
+    constructor(_sigma = 10, _rho = 28, _beta = (2)) {
         this._sigma = _sigma;
         this._rho = _rho;
         this._beta = _beta;
 
-        this.calculateIComponent = (x, y, t) => {
-            return t * ((-this._sigma * x) + (this._sigma * y));
+        this.calculateIComponent = (x, y) => {
+            this.calculateIComponent['x:' + x + 'y' + y + 's' + this._sigma] = 
+                this.calculateIComponent['x:' + x + 'y' + y + 's' + this._sigma] || ((-this._sigma * x) + (this._sigma * y));
+            return this.calculateIComponent['x:' + x + 'y' + y + 's' + this._sigma];
         }
 
-        this.calculateJComponent = (x, y, z, t) => {
-            return t * ((this._rho * x) - y - (x * z));
+        this.calculateJComponent = (x, y, z) => {
+            this.calculateJComponent['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho] = 
+                this.calculateJComponent['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho] || ((this._rho * x) - y - (x * z));
+            return this.calculateJComponent['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho];
         }
 
-        this.calculateKComponent = (x, y, z, t) => {
-            return t * ((x * y) - (this._beta * z));
+        this.calculateKComponent = (x, y, z) => {
+            this.calculateKComponent['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta] = 
+                this.calculateKComponent['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta] || ((x * y) - (this._beta * z))
+            return this.calculateKComponent['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta];
         }
     }
 
@@ -48,30 +54,30 @@ class RungeKutta4 {
                 K3 = 0,
                 K4 = 0;
             //приближение 1-го порядка
-            I1 = this.calculateIComponent(X1, Y1, T1);
-            J1 = this.calculateJComponent(X1, Y1, Z1, T1);
-            K1 = this.calculateKComponent(X1, Y1, Z1, T1);
+            I1 = this.calculateIComponent(X1, Y1);
+            J1 = this.calculateJComponent(X1, Y1, Z1);
+            K1 = this.calculateKComponent(X1, Y1, Z1);
 
             //приближение 2-го порядка
-            I2 = this.calculateIComponent(X1 + (h / 2) * I1, Y1 + (h / 2) * J1, T1 + (h / 2));
+            I2 = this.calculateIComponent(X1 + (h / 2) * I1, Y1 + (h / 2) * J1);
             J2 = this.calculateJComponent(X1 + (h / 2) *
-                I1, Y1 + (h / 2) * J1, Z1 + (h / 2) * K1, T1 + (h / 2));
+                I1, Y1 + (h / 2) * J1, Z1 + (h / 2) * K1);
             K2 = this.calculateKComponent(X1 + (h / 2) *
-                I1, Y1 + (h / 2) * J1, Z1 + (h / 2) * K1, T1 + (h / 2));
+                I1, Y1 + (h / 2) * J1, Z1 + (h / 2) * K1);
 
             //приближение 3-го порядка
-            I3 = this.calculateIComponent(X1 + (h / 2) * I2, Y1 + (h / 2) * J2, T1 + (h / 2));
+            I3 = this.calculateIComponent(X1 + (h / 2) * I2, Y1 + (h / 2) * J2);
             J3 = this.calculateJComponent(X1 + (h / 2) *
-                I2, Y1 + (h / 2) * J2, Z1 + (h / 2) * K1, T1 + (h / 2));
+                I2, Y1 + (h / 2) * J2, Z1 + (h / 2) * K1);
             K3 = this.calculateKComponent(X1 + (h / 2) *
-                I2, X1 + (h / 2) * J2, Z1 + (h / 2) * K1, T1 + (h / 2));
+                I2, X1 + (h / 2) * J2, Z1 + (h / 2) * K1);
 
             //приближение 4-го порядка
-            I4 = this.calculateIComponent(X1 + (h / 2) * I3, Y1 + (h / 2) * J3, T1 + (h / 2));
+            I4 = this.calculateIComponent(X1 + (h / 2) * I3, Y1 + (h / 2) * J3);
             J4 = this.calculateJComponent(X1 + (h / 2) *
-                I3, Y1 + (h / 2) * J3, Z1 + (h / 2) * K1, T1 + (h / 2));
+                I3, Y1 + (h / 2) * J3, Z1 + (h / 2) * K1);
             K4 = this.calculateKComponent(X1 + (h / 2) *
-                I3, X1 + (h / 2) * J3, Z1 + (h / 2) * K1, T1 + (h / 2));
+                I3, X1 + (h / 2) * J3, Z1 + (h / 2) * K1);
 
             //Расширение ряда Тейлора в 3-х размерностях
             X1 = X1 + (h / 6) * (I1 + 2 * I2 + 2 * I3 + I4);

@@ -4,6 +4,7 @@
     <link rel="stylesheet" href="./libs/bootstrap.min.css">
     <script src="./libs/jquery-3.1.1.min.js"></script>
     <script src="./libs/plotly-latest.min.js"></script>
+    
 </head>
 
 <body>
@@ -25,7 +26,7 @@
             <div class="form-group">
                 <label for="input_beta" class="control-label col-xs-2">Beta</label>
                 <div class="col-xs-10">
-                    <input type="text" class="form-control " name="input_beta" id="input_beta" placeholder="Beta" value="2">
+                    <input type="text" class="form-control " name="input_beta" id="input_beta" placeholder="Beta" value="(8/3)">
                 </div>
             </div>
         </div>
@@ -52,35 +53,72 @@
             <div class="form-group">
                 <label for="input_x" class="control-label col-xs-2">X</label>
                 <div class="col-xs-10">
-                    <input type="text" class="form-control " name="input_x" id="input_x" placeholder="X" value="20">
+                    <input type="text" class="form-control " name="input_x" id="input_x" placeholder="X" value="1">
                 </div>
             </div>
             <div class="form-group">
                 <label for="input_y" class="control-label col-xs-2">Y</label>
                 <div class="col-xs-10">
-                    <input type="text" class="form-control " name="input_y" id="input_y" placeholder="Y" value="20">
+                    <input type="text" class="form-control " name="input_y" id="input_y" placeholder="Y" value="0">
                 </div>
             </div>
             <div class="form-group">
                 <label for="input_z" class="control-label col-xs-2">Z</label>
                 <div class="col-xs-10">
-                    <input type="text" class="form-control " name="input_z" id="input_z" placeholder="Z" value="20">
+                    <input type="text" class="form-control " name="input_z" id="input_z" placeholder="Z" value="0">
                 </div>
             </div>
         </div>
         <div class="col-md-12">
             <h3>Побудувати</h3>
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" id="phasePortrait" checked="checked" value="phasePortrait">Фазовий Портрет</label>
+            <div class="col-md-12">
+                <div class="checkbox col-md-6">
+                    <label>
+                        <input type="checkbox" id="phasePortrait" checked="checked" value="phasePortrait">Фазовий Портрет</label>
+                </div>
             </div>
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" id="sLHP" value="sLHP">sLHP</label>
+            <div class="col-md-12">
+                <div class="checkbox col-md-6">
+                    <label>
+                        <input type="checkbox" id="sLHP" value="sLHP">sLHP</label>
+                </div>
+                <div id="sLHP_result" class="col-md-6">
+                    
+                </div>
             </div>
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" id="LHPSpectre" value="LHPSpectre">LHPSpectre</label>
+            <div class="col-md-12">
+                <div class="checkbox col-md-6">
+                    <label>
+                        <input type="checkbox" id="LHPSpectre" value="LHPSpectre">LHPSpectre</label>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="checkbox col-md-6">
+                    <label>
+                        <input type="checkbox" id="projectionXY" value="projectionXY">projectionXY</label>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="checkbox col-md-6">
+                    <label>
+                        <input type="checkbox" id="projectionXZ" value="projectionXZ">projectionXZ</label>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="checkbox col-md-6">
+                    <label>
+                        <input type="checkbox" id="projectionYZ" value="projectionYZ">projectionYZ</label>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="checkbox col-md-6">
+                    <label>
+                        <input type="checkbox" id="planeXY" value="planeXY">planeXY</label>
+                </div>
+                <div class="form-group col-md-6">
+                    <input type="text" class="form-control " name="input_planeXY" id="input_planeXY" placeholder="planeXY Z" value="0">
+                </div>
+
             </div>
         </div>
         <div class="col-md-12">
@@ -100,7 +138,7 @@
             <div class="form-group">
                 <label for="input_h" class="control-label col-xs-2">Точнiсть Обчислень</label>
                 <div class="col-xs-10">
-                    <input type="text" class="form-control " name="input_h" id="input_h" placeholder="Точнiсть Обчислень" value="0.1">
+                    <input type="text" class="form-control " name="input_h" id="input_h" placeholder="Точнiсть Обчислень" value="0.01">
                 </div>
             </div>
         </div>
@@ -109,10 +147,12 @@
     </form>
     <!-- Plotly chart will be drawn inside this DIV -->
     <div id="myDiv" class="col-md-9"></div>
+    <script src="libs/sylvester.src.js"></script>
+    <script src="src/projection.js"></script>
     <script src="src/runge-kutta.3d.js"></script>
     <script src="src/plot.js"></script>
     <script src="src/methods.js"></script>
     <script src="src/view.js"></script>
     <!-- Latest compiled and minified JavaScript -->
-   <!--  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script> -->
+    <!--  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script> -->
 </body>

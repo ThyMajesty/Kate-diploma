@@ -1,15 +1,5 @@
 var methods = {
-    phasePortrait: () => {
-        return (new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']))
-            .calculate(
-                variables['input_x'],
-                variables['input_y'],
-                variables['input_z'],
-                variables['input_t'],
-                variables['input_h'],
-                variables['input_iterations'],
-                variables['input_iterations_start']);
-    },
+    phasePortrait: phasePortrait,
     sLHP: () => {
         let vertex = {
                 x: 1,
@@ -26,17 +16,11 @@ var methods = {
         let rkdef = new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']),
             rksfz = new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']);
 
-        rksfz.setIComponent(function(x, y, t) {
-            return this._sigma * (y - x);
-        });
+        rksfz.setIComponent(calculateIComponent);
 
-        rksfz.setJComponent(function(x, y, z, t) {
-            return (this._rho - this.Z1) * x - y - this.X1 * z;
-        });
+        rksfz.setJComponent(calculateJComponent);
 
-        rksfz.setKComponent(function(x, y, z, t) {
-            return this.Y1 * x + this.X1 * y - this._beta * z;
-        });
+        rksfz.setKComponent(calculateKComponent);
 
         for (let i = variables['input_iterations_start']; i < variables['input_iterations']; i++) {
             arr = arr.concat(rksfz.calculate(
@@ -55,12 +39,12 @@ var methods = {
 
 
             let sl = slhp(arr);
-            if(prev.toFixed(7) === sl.toFixed(7)) {
+            console.log(sl)
+            if (prev.toFixed(7) === sl.toFixed(7) && prev != 0 && sl != 0) {
                 console.log(prev.toFixed(7) === sl.toFixed(7));
                 break;
             }
-            console.log(i);
-            prev = Math.max(prev, sl);
+            prev = sl !== 0 ? Math.max(prev, sl) : prev;
         }
         arr.result = prev;
         return arr;
@@ -81,22 +65,13 @@ var methods = {
                 y: 0,
                 z: 1
             }],
-            result = []
-            ;
+            result = [];
         let rkdef = new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']),
             rksfz = new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']);
 
-        rksfz.setIComponent(function(x, y, t) {
-            return this._sigma * (y - x);
-        });
-
-        rksfz.setJComponent(function(x, y, z, t) {
-            return (this._rho - this.Z1) * x - y - this.X1 * z;
-        });
-
-        rksfz.setKComponent(function(x, y, z, t) {
-            return this.Y1 * x + this.X1 * y - this._beta * z;
-        });
+        rksfz.setIComponent(calculateIComponent);
+        rksfz.setJComponent(calculateJComponent);
+        rksfz.setKComponent(calculateKComponent);
 
         for (let i = variables['input_iterations_start']; i < variables['input_iterations']; i++) {
             arr1 = arr1.concat(rksfz.calculate(
@@ -145,7 +120,7 @@ var methods = {
             arr3[arr3.length - 1].x /= n3;
             arr3[arr3.length - 1].y /= n3;
             arr3[arr3.length - 1].z /= n3;
-            
+
             result.push({
                 x: slhp(arr1),
                 y: slhp(arr2),
@@ -153,15 +128,64 @@ var methods = {
             });
         }
 
-        /*let govno = {
+        /*let res = {
             arr1,
             arr2, 
             arr3,
             result: [sum1, sum2, sum3]
         }*/
         return result;
-    }
+    },
+    projectionXY: () => {
+        return phasePortrait().map((el) => {
+            return {
+                x: el.x,
+                y: el.y,
+                z: 0
+            }
+        })
+    },
+    projectionXZ: () => {
+        return phasePortrait().map((el) => {
+            return {
+                x: el.x,
+                y: 0,
+                z: el.z
+            }
+        })
+    },
+    projectionYZ: () => {
+        return phasePortrait().map((el) => {
+            return {
+                x: 0,
+                y: el.y,
+                z: el.z
+            }
+        })
+    },
+
+    planeXY: (z) => {
+        let res = phasePortrait().reduce((prev, next) => {
+            console.log((next.z + variables['input_h']) >= variables['input_planeXY'].toFixed(2), (next.z - variables['input_h']) <= variables['input_planeXY'].toFixed(2));
+
+            if ((next.z + variables['input_h'] * 20) >= variables['input_planeXY'].toFixed(2) && (next.z - variables['input_h'] * 20) <= variables['input_planeXY'].toFixed(2)) {
+                next.z = variables['input_planeXY'];
+                next.c = 'rgb(0, 0, 0)';
+                next.s = 5;
+                prev.push(next);
+            }
+            return prev;
+        }, []);
+        res.plane = variables['input_planeXY'];
+        return res;
+    },
+
 }
+
+
+
+
+
 
 
 function xNorma(obj) {
@@ -170,16 +194,16 @@ function xNorma(obj) {
 
 function yCalc(obj1, obj2) {
     return {
-        x: obj2.x - scalarSum(obj1, obj2) * obj1.x, 
-        y: obj2.y - scalarSum(obj1, obj2) * obj1.y, 
+        x: obj2.x - scalarSum(obj1, obj2) * obj1.x,
+        y: obj2.y - scalarSum(obj1, obj2) * obj1.y,
         z: obj2.z - scalarSum(obj1, obj2) * obj1.z
-    } ;
+    };
 }
 
-function zCalc (obj1, obj2, obj3) {
+function zCalc(obj1, obj2, obj3) {
     return {
-        x: obj3.x - scalarSum(obj3, obj1) * obj1.x - scalarSum(obj3, obj2) * obj2.x, 
-        y: obj3.y - scalarSum(obj3, obj1) * obj1.y - scalarSum(obj3, obj2) * obj2.y, 
+        x: obj3.x - scalarSum(obj3, obj1) * obj1.x - scalarSum(obj3, obj2) * obj2.x,
+        y: obj3.y - scalarSum(obj3, obj1) * obj1.y - scalarSum(obj3, obj2) * obj2.y,
         z: obj3.z - scalarSum(obj3, obj1) * obj1.z - scalarSum(obj3, obj2) * obj2.z
     };
 }
@@ -197,5 +221,37 @@ function hz(arr) {
 }
 
 function slhp(arr) {
-    return (1/(variables['input_count'] * variables['input_iterations'])) * hz(arr);
+    return (1 / (variables['input_count'] * variables['input_iterations'])) * hz(arr);
+}
+
+
+function phasePortrait() {
+    return (new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']))
+        .calculate(
+            variables['input_x'],
+            variables['input_y'],
+            variables['input_z'],
+            variables['input_t'],
+            variables['input_h'],
+            variables['input_iterations'],
+            variables['input_iterations_start']);
+}
+
+
+function calculateIComponent(x, y) {
+    calculateIComponent['x:' + x + 'y' + y + 's' + this._sigma] =
+        calculateIComponent['x:' + x + 'y' + y + 's' + this._sigma] || this._sigma * (y - x)
+    return calculateIComponent['x:' + x + 'y' + y + 's' + this._sigma];
+}
+
+function calculateJComponent(x, y, z) {
+    calculateJComponent['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho + 'z1' + this.Z1 + 'x1' + this.X1] = 
+        calculateJComponent['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho + 'z1' + this.Z1 + 'x1' + this.X1] || (this._rho - this.Z1) * x - y - this.X1 * z;
+    return calculateJComponent['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho + 'z1' + this.Z1 + 'x1' + this.X1];
+}
+
+function calculateKComponent(x, y, z) {
+    calculateKComponent['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta + 'x1' + this.X1 + 'y1' + this.Y1] = 
+        calculateKComponent['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta + 'x1' + this.X1 + 'y1' + this.Y1] || this.Y1 * x + this.X1 * y - this._beta * z
+    return calculateKComponent['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta + 'x1' + this.X1 + 'y1' + this.Y1];
 }

@@ -12,12 +12,17 @@ $(document).ready(() => {
             'input_t',
             'input_h',
             'input_iterations',
-            'input_iterations_start'
+            'input_iterations_start',
+            'input_planeXY',
         ],
         methods_keys = [
             'phasePortrait',
             'sLHP',
-            'LHPSpectre'
+            'LHPSpectre',
+            'projectionXY',
+            'projectionXZ',
+            'projectionYZ',
+            'planeXY',
         ],
         methods_map = {
             'phasePortrait': true
@@ -42,8 +47,8 @@ $(document).ready(() => {
                     inputs_map['input_count'].val((variables['input_iterations'] - variables['input_iterations_start']) / variables['input_h']);
                     variables['input_count'] = eval(inputs_map['input_count'].val());
                 }
-
-                plotElement.update(onUpdateData());
+                let tmp = onUpdateData();
+                plotElement.update(tmp);
             });
     }
 
@@ -52,7 +57,9 @@ $(document).ready(() => {
     methods_keys.map((el) => {
         $('#' + el).on('click', function () {
             methods_map[this.value] = this.checked;
-            plotElement.update(onUpdateData());
+            let tmp = onUpdateData();
+            $('#' + el + '_result').text(tmp[el] && tmp[el].result)
+            plotElement.update(tmp);
         });
     })
 
@@ -62,7 +69,7 @@ $(document).ready(() => {
         let res = {};
         for(let m in methods_map) {
             if(methods_map[m]){
-                res[m] = methods[m]()
+                res[m] = methods[m](variables[m])
             }
         }
         console.log(res)

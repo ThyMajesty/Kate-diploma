@@ -10,6 +10,7 @@ $(document).ready(() => {
                 b: 0,
                 t: 0
             },
+             //hovermode: 'closest',
             height: 780
         }).then(el => {
             el.update = function(values) {
@@ -48,10 +49,14 @@ $(document).ready(() => {
                 z: values[v].map((el) => el.z),
                 opacity: 1,
                 marker: {
-                    color: 'rgb(0, 0, 0)',
-                    size: 1
+                    size: values[v].map((el) => el.s || 3),
+                    color: values[v].map((el) => el.c || 'rgb(13, 80, 80)'),
+                    //size: values[v].map((el) => el.s) || 1
                 }
             });
+            /*if(values[v].plane) {
+
+            }*/
         }
         return data;
     }
