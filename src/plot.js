@@ -40,20 +40,21 @@ $(document).ready(() => {
                     reversescale: false
                 }
             });
-            data.push({
+            /*data.push({
                 name: v + ' dots',
                 type: 'scatter3d',
                 mode: 'markers',
                 x: values[v].map((el) => el.x),
                 y: values[v].map((el) => el.y),
                 z: values[v].map((el) => el.z),
-                opacity: 1,
+                opacity: 2,
                 marker: {
                     size: values[v].map((el) => el.s || 3),
                     color: values[v].map((el) => el.c || 'rgb(13, 80, 80)'),
+                    color: 'rgb(13, 80, 80)',
                     //size: values[v].map((el) => el.s) || 1
                 }
-            });
+            });*/
             /*if(values[v].plane) {
 
             }*/

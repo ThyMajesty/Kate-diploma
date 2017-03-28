@@ -1,29 +1,71 @@
+var systemsMap = {
+    sys1: {
+        m: lorents,
+        calculateIComponent: calculateIComponentLorents,
+        calculateJComponent: calculateJComponentLorents,
+        calculateKComponent: calculateKComponentLorents,
+        calculateIComponentLHP: calculateIComponentLorentsLHP,
+        calculateJComponentLHP: calculateJComponentLorentsLHP,
+        calculateKComponentLHP: calculateKComponentLorentsLHP,
+    },
+    sys2: {
+        m: rossler,
+        calculateIComponent: calculateIComponentRossler,
+        calculateJComponent: calculateJComponentRossler,
+        calculateKComponent: calculateKComponentRossler,
+        calculateIComponentLHP: calculateIComponentRosslerLHP,
+        calculateJComponentLHP: calculateJComponentRosslerLHP,
+        calculateKComponentLHP: calculateKComponentRosslerLHP,
+    },
+    sys3: {
+        m: pendulum,
+        calculateIComponent: calculateIComponentPendulum,
+        calculateJComponent: calculateJComponentPendulum,
+        calculateKComponent: calculateKComponentPendulum,
+        calculateIComponentLHP: calculateIComponentPendulumLHP,
+        calculateJComponentLHP: calculateJComponentPendulumLHP,
+        calculateKComponentLHP: calculateKComponentPendulumLHP,
+    }
+}
 var methods = {
     phasePortrait: phasePortrait,
     sLHP: () => {
-        let vertex = {
-                x: 1,
-                y: 0,
-                z: 0
-            },
-            prev = Number.MIN_SAFE_INTEGER,
-            /*arr = [{
+        let prev = [],
+            arr = [{
                 x: variables['input_x'],
                 y: variables['input_y'],
                 z: variables['input_z'],
-            }];*/
-            arr = [vertex];
+            }],
+            arr2 = [{
+                x: 1,
+                y: 0,
+                z: 0
+            }];
         let rkdef = new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']),
             rksfz = new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']);
 
-        rksfz.setIComponent(calculateIComponent);
+        rkdef.setIComponent(systemsMap[system].calculateIComponent);
+        rkdef.setJComponent(systemsMap[system].calculateJComponent);
+        rkdef.setKComponent(systemsMap[system].calculateKComponent);
+        rkdef.setMethod(systemsMap[system].m);
 
-        rksfz.setJComponent(calculateJComponent);
+        rksfz.setIComponent(systemsMap[system].calculateIComponentLHP);
+        rksfz.setJComponent(systemsMap[system].calculateJComponentLHP);
+        rksfz.setKComponent(systemsMap[system].calculateKComponentLHP);
+        rksfz.setMethod(systemsMap[system].m);
 
-        rksfz.setKComponent(calculateKComponent);
+
+        arr = arr.concat(rkdef.calculate(
+            arr[arr.length - 1].x,
+            arr[arr.length - 1].y,
+            arr[arr.length - 1].z,
+            variables['input_t'],
+            variables['input_h'],
+            1,
+            0));
 
         for (let i = variables['input_iterations_start']; i < variables['input_iterations']; i++) {
-            arr = arr.concat(rksfz.calculate(
+            arr = arr.concat(rkdef.calculate(
                 arr[arr.length - 1].x,
                 arr[arr.length - 1].y,
                 arr[arr.length - 1].z,
@@ -32,22 +74,34 @@ var methods = {
                 i + 1,
                 i));
 
-            let n = xNorma(arr[arr.length - 1]);
-            arr[arr.length - 1].x /= n;
-            arr[arr.length - 1].y /= n;
-            arr[arr.length - 1].z /= n;
+            rksfz.X11 = arr[arr.length - 1].x;
+            rksfz.Y11 = arr[arr.length - 1].y;
+            rksfz.Z11 = arr[arr.length - 1].z;
+
+            arr2 = arr2.concat(rksfz.calculate(
+                arr2[arr2.length - 1].x,
+                arr2[arr2.length - 1].y,
+                arr2[arr2.length - 1].z,
+                variables['input_t'],
+                variables['input_h'],
+                i + 1,
+                i));
+
+            let sl = slhp(arr2);
+
+            let n = xNorma(arr2[arr2.length - 1]);
+            arr2[arr2.length - 1].x /= n;
+            arr2[arr2.length - 1].y /= n;
+            arr2[arr2.length - 1].z /= n;
 
 
-            let sl = slhp(arr);
-            console.log(sl)
-            if (prev.toFixed(7) === sl.toFixed(7) && prev != 0 && sl != 0) {
-                console.log(prev.toFixed(7) === sl.toFixed(7));
+            if (prev.length > 5 && prev.slice(prev.length - 6).filter((el) => el.toFixed(3) === sl.toFixed(3)).length === 5) {
                 break;
             }
-            prev = sl !== 0 ? Math.max(prev, sl) : prev;
+            prev.push(sl);
         }
-        arr.result = prev;
-        return arr;
+        arr2.result = prev;
+        return arr2;
     },
     LHPSpectre: () => {
         let arr1 = [{
@@ -69,10 +123,12 @@ var methods = {
         let rkdef = new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']),
             rksfz = new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']);
 
-        rksfz.setIComponent(calculateIComponent);
-        rksfz.setJComponent(calculateJComponent);
-        rksfz.setKComponent(calculateKComponent);
+        rksfz.setIComponent(systemsMap[system].calculateIComponent);
 
+        rksfz.setJComponent(systemsMap[system].calculateJComponent);
+
+        rksfz.setKComponent(systemsMap[system].calculateKComponent);
+        rksfz.setMethod(systemsMap[system].m);
         for (let i = variables['input_iterations_start']; i < variables['input_iterations']; i++) {
             arr1 = arr1.concat(rksfz.calculate(
                 arr1[arr1.length - 1].x,
@@ -186,8 +242,6 @@ var methods = {
 
 
 
-
-
 function xNorma(obj) {
     return Math.sqrt(obj.x * obj.x + obj.y * obj.y + obj.z * obj.z);
 }
@@ -221,37 +275,271 @@ function hz(arr) {
 }
 
 function slhp(arr) {
-    return (1 / (variables['input_count'] * variables['input_iterations'])) * hz(arr);
+    return (1 / ( /*variables['input_count']*/ arr.length * variables['input_t'])) * hz(arr);
 }
 
 
 function phasePortrait() {
-    return (new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta']))
-        .calculate(
-            variables['input_x'],
-            variables['input_y'],
-            variables['input_z'],
-            variables['input_t'],
-            variables['input_h'],
-            variables['input_iterations'],
-            variables['input_iterations_start']);
+    rksfz = new RungeKutta4(variables['input_sigma'], variables['input_rho'], variables['input_beta'])
+
+    rksfz.c = 1;
+    rksfz.D = 4;
+    rksfz.E = 9;
+    rksfz.F = 2;
+
+    rksfz.setIComponent(systemsMap[system].calculateIComponent);
+    rksfz.setJComponent(systemsMap[system].calculateJComponent);
+    rksfz.setKComponent(systemsMap[system].calculateKComponent);
+    rksfz.setMethod(systemsMap[system].m);
+
+    return rksfz.calculate(
+        variables['input_x'],
+        variables['input_y'],
+        variables['input_z'],
+        variables['input_t'],
+        variables['input_h'],
+        variables['input_iterations'],
+        variables['input_iterations_start']);
+}
+
+//Lorents
+function calculateIComponentLorents(x, y) {
+    calculateIComponentLorents['x:' + x + 'y:' + y + 's:' + this._sigma] =
+        calculateIComponentLorents['x:' + x + 'y:' + y + 's:' + this._sigma] || ((-this._sigma * x) + (this._sigma * y));
+    return calculateIComponentLorents['x:' + x + 'y:' + y + 's:' + this._sigma];
+}
+
+function calculateJComponentLorents(x, y, z) {
+    calculateJComponentLorents['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho] =
+        calculateJComponentLorents['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho] || ((this._rho * x) - y - (x * z));
+    return calculateJComponentLorents['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho];
+}
+
+function calculateKComponentLorents(x, y, z) {
+    calculateKComponentLorents['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta] =
+        calculateKComponentLorents['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta] || ((x * y) - (this._beta * z))
+    return calculateKComponentLorents['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta];
 }
 
 
-function calculateIComponent(x, y) {
-    calculateIComponent['x:' + x + 'y' + y + 's' + this._sigma] =
-        calculateIComponent['x:' + x + 'y' + y + 's' + this._sigma] || this._sigma * (y - x)
-    return calculateIComponent['x:' + x + 'y' + y + 's' + this._sigma];
+function calculateIComponentLorentsLHP(x, y) {
+    calculateIComponentLorentsLHP['x:' + x + 'y' + y + 's' + this._sigma] =
+        calculateIComponentLorentsLHP['x:' + x + 'y' + y + 's' + this._sigma] || this._sigma * (y - x)
+    return calculateIComponentLorentsLHP['x:' + x + 'y' + y + 's' + this._sigma];
 }
 
-function calculateJComponent(x, y, z) {
-    calculateJComponent['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho + 'z1' + this.Z1 + 'x1' + this.X1] = 
-        calculateJComponent['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho + 'z1' + this.Z1 + 'x1' + this.X1] || (this._rho - this.Z1) * x - y - this.X1 * z;
-    return calculateJComponent['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho + 'z1' + this.Z1 + 'x1' + this.X1];
+function calculateJComponentLorentsLHP(x, y, z) {
+    calculateJComponentLorentsLHP['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho + 'z1' + this.Z11 + 'x1' + this.X11] =
+        calculateJComponentLorentsLHP['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho + 'z1' + this.Z11 + 'x1' + this.X11] || (this._rho - this.Z11) * x - y - this.X11 * z;
+    return calculateJComponentLorentsLHP['x:' + x + 'y' + y + 'z' + z + 'r' + this._rho + 'z1' + this.Z11 + 'x1' + this.X11];
 }
 
-function calculateKComponent(x, y, z) {
-    calculateKComponent['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta + 'x1' + this.X1 + 'y1' + this.Y1] = 
-        calculateKComponent['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta + 'x1' + this.X1 + 'y1' + this.Y1] || this.Y1 * x + this.X1 * y - this._beta * z
-    return calculateKComponent['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta + 'x1' + this.X1 + 'y1' + this.Y1];
+function calculateKComponentLorentsLHP(x, y, z) {
+    calculateKComponentLorentsLHP['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta + 'x1' + this.X11 + 'y1' + this.Y11] =
+        calculateKComponentLorentsLHP['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta + 'x1' + this.X11 + 'y1' + this.Y11] || this.Y11 * x + this.X11 * y - this._beta * z
+    return calculateKComponentLorentsLHP['x:' + x + 'y' + y + 'z' + z + 'b' + this._beta + 'x1' + this.X11 + 'y1' + this.Y11];
+}
+
+
+
+//Rossler
+function calculateIComponentRossler(y, z) {
+    calculateIComponentRossler['y:' + y + 'z' + z] =
+        calculateIComponentRossler['y:' + y + 'z' + z] || -y - z
+    return calculateIComponentRossler['y:' + y + 'z' + z];
+}
+
+function calculateJComponentRossler(x, y) {
+    calculateJComponentRossler['x:' + x + 'y' + y + 's' + this._sigma] =
+        calculateJComponentRossler['x:' + x + 'y' + y + 's' + this._sigma] || x + this._sigma * y;
+    return calculateJComponentRossler['x:' + x + 'y' + y + 's' + this._sigma];
+}
+
+function calculateKComponentRossler(x, z) {
+    calculateKComponentRossler['x:' + x + 'z' + z + 'r' + this._rho + 'b' + this._beta] =
+        calculateKComponentRossler['x:' + x + 'z' + z + 'r' + this._rho + 'b' + this._beta] || this._rho + z * (x - this._beta)
+    return calculateKComponentRossler['x:' + x + 'z' + z + 'r' + this._rho + 'b' + this._beta];
+}
+
+
+function calculateIComponentRosslerLHP(y, z) {
+    calculateIComponentRosslerLHP['y:' + y + 'z' + z] =
+        calculateIComponentRosslerLHP['y:' + y + 'z' + z] || -y - z
+    return calculateIComponentRosslerLHP['y:' + y + 'z' + z];
+}
+
+function calculateJComponentRosslerLHP(x, y) {
+    calculateJComponentRosslerLHP['x:' + x + 'y' + y + 's' + this._sigma] =
+        calculateJComponentRosslerLHP['x:' + x + 'y' + y + 's' + this._sigma] || x + this._sigma * y;
+    return calculateJComponentRosslerLHP['x:' + x + 'y' + y + 's' + this._sigma];
+}
+
+function calculateKComponentRosslerLHP(x, z) {
+    calculateKComponentRosslerLHP['x:' + x + 'z' + z + 'z1' + this.Z11 + 'b' + this._beta + 'x1' + this.X11] =
+        calculateKComponentRosslerLHP['x:' + x + 'z' + z + 'z1' + this.Z11 + 'b' + this._beta + 'x1' + this.X11] || x * this.Z11 + z * (-this._beta + this.X11)
+    return calculateKComponentRosslerLHP['x:' + x + 'z' + z + 'z1' + this.Z11 + 'b' + this._beta + 'x1' + this.X11];
+}
+
+
+//Pendulum
+function calculateIComponentPendulum(x, y, z) {
+    return this.c * x - y * z - (1 / 8) * (x * x * y + y * y * y);
+}
+
+function calculateJComponentPendulum(x, y, z) {
+    return this.c * y + x * z + (1 / 8) * (x * x * x + x * y * y) + 1;
+}
+
+function calculateKComponentPendulum(x, y, z) {
+    return this.D * y + this.E * z + this.F;
+}
+
+
+function calculateIComponentPendulumLHP(y, z) {
+    calculateIComponentPendulumLHP['y:' + y + 'z' + z] =
+        calculateIComponentPendulumLHP['y:' + y + 'z' + z] || -y - z
+    return calculateIComponentPendulumLHP['y:' + y + 'z' + z];
+}
+
+function calculateJComponentPendulumLHP(x, y) {
+    calculateJComponentPendulumLHP['x:' + x + 'y' + y + 's' + this._sigma] =
+        calculateJComponentPendulumLHP['x:' + x + 'y' + y + 's' + this._sigma] || x + this._sigma * y;
+    return calculateJComponentPendulumLHP['x:' + x + 'y' + y + 's' + this._sigma];
+}
+
+function calculateKComponentPendulumLHP(x, z) {
+    calculateKComponentPendulumLHP['x:' + x + 'z' + z + 'z1' + this.Z11 + 'b' + this._beta + 'x1' + this.X11] =
+        calculateKComponentPendulumLHP['x:' + x + 'z' + z + 'z1' + this.Z11 + 'b' + this._beta + 'x1' + this.X11] || x * this.Z11 + z * (-this._beta + this.X11)
+    return calculateKComponentPendulumLHP['x:' + x + 'z' + z + 'z1' + this.Z11 + 'b' + this._beta + 'x1' + this.X11];
+}
+
+
+
+
+
+
+function pendulum() {
+    let
+        I1 = 0,
+        I2 = 0,
+        I3 = 0,
+        I4 = 0,
+        J1 = 0,
+        J2 = 0,
+        J3 = 0,
+        J4 = 0,
+        K1 = 0,
+        K2 = 0,
+        K3 = 0,
+        K4 = 0;
+    //приближение 1-го порядка
+    I1 = this.calculateIComponent(this.X1, this.Y1, this.Z1);
+    J1 = this.calculateJComponent(this.X1, this.Y1, this.Z1);
+    K1 = this.calculateKComponent(this.X1, this.Y1, this.Z1);
+
+    //приближение 2-го порядка
+    I2 = this.calculateIComponent(this.X1 + (this.h / 2) * I1, this.Y1 + (this.h / 2) * J1, this.Z1 + (this.h / 2) * K1);
+    J2 = this.calculateJComponent(this.X1 + (this.h / 2) * I1, this.Y1 + (this.h / 2) * J1, this.Z1 + (this.h / 2) * K1);
+    K2 = this.calculateKComponent(this.X1 + (this.h / 2) * I1, this.Y1 + (this.h / 2) * J1, this.Z1 + (this.h / 2) * K1);
+
+    //приближение 3-го порядка
+    I3 = this.calculateIComponent(this.X1 + (this.h / 2) * I2, this.Y1 + (this.h / 2) * J2, this.Z1 + (this.h / 2) * K2);
+    J3 = this.calculateJComponent(this.X1 + (this.h / 2) * I2, this.Y1 + (this.h / 2) * J2, this.Z1 + (this.h / 2) * K2);
+    K3 = this.calculateKComponent(this.X1 + (this.h / 2) * I2, this.X1 + (this.h / 2) * J2, this.Z1 + (this.h / 2) * K2);
+
+    //приближение 4-го порядка
+    I4 = this.calculateIComponent(this.X1 + (this.h / 2) * I3, this.Y1 + (this.h / 2) * J3, this.Z1 + (this.h / 2) * K3);
+    J4 = this.calculateJComponent(this.X1 + (this.h / 2) * I3, this.Y1 + (this.h / 2) * J3, this.Z1 + (this.h / 2) * K3);
+    K4 = this.calculateKComponent(this.X1 + (this.h / 2) * I3, this.X1 + (this.h / 2) * J3, this.Z1 + (this.h / 2) * K3);
+
+    //Расширение ряда Тейлора в 3-х размерностях
+    this.X1 = this.X1 + (this.h / 6) * (I1 + 2 * I2 + 2 * I3 + I4);
+    this.Y1 = this.Y1 + (this.h / 6) * (J1 + 2 * J2 + 2 * J3 + J4);
+    this.Z1 = this.Z1 + (this.h / 6) * (K1 + 2 * K2 + 2 * K3 + K4);
+
+    return { x: this.X1, y: this.Y1, z: this.Z1 };
+}
+
+function lorents() {
+    let
+        I1 = 0,
+        I2 = 0,
+        I3 = 0,
+        I4 = 0,
+        J1 = 0,
+        J2 = 0,
+        J3 = 0,
+        J4 = 0,
+        K1 = 0,
+        K2 = 0,
+        K3 = 0,
+        K4 = 0;
+    //приближение 1-го порядка
+    I1 = this.calculateIComponent(this.X1, this.Y1, this.Z1);
+    J1 = this.calculateJComponent(this.X1, this.Y1, this.Z1);
+    K1 = this.calculateKComponent(this.X1, this.Y1, this.Z1);
+
+    //приближение 2-го порядка
+    I2 = this.calculateIComponent(this.X1 + (this.h / 2) * I1, this.Y1 + (this.h / 2) * J1, this.Z1 + (this.h / 2) * K1);
+    J2 = this.calculateJComponent(this.X1 + (this.h / 2) * I1, this.Y1 + (this.h / 2) * J1, this.Z1 + (this.h / 2) * K1);
+    K2 = this.calculateKComponent(this.X1 + (this.h / 2) * I1, this.Y1 + (this.h / 2) * J1, this.Z1 + (this.h / 2) * K1);
+
+    //приближение 3-го порядка
+    I3 = this.calculateIComponent(this.X1 + (this.h / 2) * I2, this.Y1 + (this.h / 2) * J2, this.Z1 + (this.h / 2) * K2);
+    J3 = this.calculateJComponent(this.X1 + (this.h / 2) * I2, this.Y1 + (this.h / 2) * J2, this.Z1 + (this.h / 2) * K2);
+    K3 = this.calculateKComponent(this.X1 + (this.h / 2) * I2, this.X1 + (this.h / 2) * J2, this.Z1 + (this.h / 2) * K2);
+
+    //приближение 4-го порядка
+    I4 = this.calculateIComponent(this.X1 + (this.h / 2) * I3, this.Y1 + (this.h / 2) * J3, this.Z1 + (this.h / 2) * K3);
+    J4 = this.calculateJComponent(this.X1 + (this.h / 2) * I3, this.Y1 + (this.h / 2) * J3, this.Z1 + (this.h / 2) * K3);
+    K4 = this.calculateKComponent(this.X1 + (this.h / 2) * I3, this.X1 + (this.h / 2) * J3, this.Z1 + (this.h / 2) * K3);
+
+    //Расширение ряда Тейлора в 3-х размерностях
+    this.X1 = this.X1 + (this.h / 6) * (I1 + 2 * I2 + 2 * I3 + I4);
+    this.Y1 = this.Y1 + (this.h / 6) * (J1 + 2 * J2 + 2 * J3 + J4);
+    this.Z1 = this.Z1 + (this.h / 6) * (K1 + 2 * K2 + 2 * K3 + K4);
+
+    return { x: this.X1, y: this.Y1, z: this.Z1 };
+}
+
+function rossler() {
+    let
+        I1 = 0,
+        I2 = 0,
+        I3 = 0,
+        I4 = 0,
+        J1 = 0,
+        J2 = 0,
+        J3 = 0,
+        J4 = 0,
+        K1 = 0,
+        K2 = 0,
+        K3 = 0,
+        K4 = 0;
+    //приближение 1-го порядка
+    I1 = this.calculateIComponent(this.Y1, this.Z1);
+    J1 = this.calculateJComponent(this.X1, this.Y1);
+    K1 = this.calculateKComponent(this.X1, this.Z1);
+
+    //приближение 2-го порядка
+    I2 = this.calculateIComponent(this.Y1 + (this.h / 2) * J1, this.Z1 + (this.h / 2) * K1);
+    J2 = this.calculateJComponent(this.X1 + (this.h / 2) * I1, this.Y1 + (this.h / 2) * J1);
+    K2 = this.calculateKComponent(this.X1 + (this.h / 2) * I1, this.Z1 + (this.h / 2) * K1);
+
+    //приближение 3-го порядка
+    I3 = this.calculateIComponent(this.Y1 + (this.h / 2) * J2, this.Z1 + (this.h / 2) * K2);
+    J3 = this.calculateJComponent(this.X1 + (this.h / 2) * I2, this.Y1 + (this.h / 2) * J2);
+    K3 = this.calculateKComponent(this.X1 + (this.h / 2) * I2, this.Z1 + (this.h / 2) * K2);
+
+    //приближение 4-го порядка
+    I4 = this.calculateIComponent(this.Y1 + (this.h / 2) * J3, this.Z1 + (this.h / 2) * K3);
+    J4 = this.calculateJComponent(this.X1 + (this.h / 2) * I3, this.Y1 + (this.h / 2) * J3);
+    K4 = this.calculateKComponent(this.X1 + (this.h / 2) * I3, this.Z1 + (this.h / 2) * K3);
+
+    //Расширение ряда Тейлора в 3-х размерностях
+    this.X1 = this.X1 + (this.h / 6) * (I1 + 2 * I2 + 2 * I3 + I4);
+    this.Y1 = this.Y1 + (this.h / 6) * (J1 + 2 * J2 + 2 * J3 + J4);
+    this.Z1 = this.Z1 + (this.h / 6) * (K1 + 2 * K2 + 2 * K3 + K4);
+
+    return { x: this.X1, y: this.Y1, z: this.Z1 };
 }

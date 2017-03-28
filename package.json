@@ -2,9 +2,11 @@
   "name": "kate-diploma",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "package": "electron-packager ./ ReserchingOnDeterminatedSystems --all --out ReserchingOnDeterminatedSystems --version 0.30.2 --overwrite"
   },
   "repository": {
     "type": "git",
@@ -16,5 +18,10 @@
     "url": "https://github.com/ThyMajesty/Kate-diploma/issues"
   },
   "homepage": "https://github.com/ThyMajesty/Kate-diploma#readme",
-
+  "dependencies": {
+    "electron": "^1.6.1"
+  },
+  "devDependencies": {
+    "electron-packager": "^8.5.2"
+  }
 }

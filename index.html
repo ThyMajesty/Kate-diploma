@@ -1,10 +1,27 @@
 <head>
+    <script>
+    if (typeof module === 'object') {
+        window.module = module;
+        module = undefined;
+    }
+    </script>
+    <script src="./libs/jquery-3.1.1.min.js"></script>
+    <script>
+    if (window.module) module = window.module;
+    </script>
     <!-- Plotly.js -->
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="./libs/bootstrap.min.css">
-    <script src="./libs/jquery-3.1.1.min.js"></script>
     <script src="./libs/plotly-latest.min.js"></script>
+    <style type="text/css" media="screen">
+    input {
+        height: 28px;
+    }
     
+    .form-control {
+        height: 28px;
+    }
+    </style>
 </head>
 
 <body>
@@ -12,19 +29,40 @@
         <div class="col-md-12">
             <h3>Параметри Системи </h3>
             <div class="form-group">
-                <label for="input_sigma" class="control-label col-xs-2">Sigma</label>
+                <div class="radio">
+                    <label>
+                        <input id="sys1" type="radio" name="sys" checked="true">Система Лоренца</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="radio">
+                    <label>
+                        <input id="sys2" type="radio" name="sys">Система Ресслера</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="radio">
+                    <label>
+                        <input id="sys3" type="radio" name="sys">Ниидиальный Плоский Маятник</label>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <h3>Параметри Системи </h3>
+            <div class="form-group">
+                <label id="input_sigma_label" for="input_sigma" class="control-label col-xs-2">Sigma</label>
                 <div class="col-xs-10">
                     <input type="text" class="form-control " name="input_sigma" id="input_sigma" placeholder="Sigma" value="10">
                 </div>
             </div>
             <div class="form-group">
-                <label for="input_rho" class="control-label col-xs-2">Rho</label>
+                <label id="input_rho_label" for="input_rho" class="control-label col-xs-2">r</label>
                 <div class="col-xs-10">
                     <input type="text" class="form-control " name="input_rho" id="input_rho" placeholder="Rho" value="28">
                 </div>
             </div>
             <div class="form-group">
-                <label for="input_beta" class="control-label col-xs-2">Beta</label>
+                <label id="input_beta_label" for="input_beta" class="control-label col-xs-2">b</label>
                 <div class="col-xs-10">
                     <input type="text" class="form-control " name="input_beta" id="input_beta" placeholder="Beta" value="(8/3)">
                 </div>
@@ -39,7 +77,7 @@
                     </div> -->
                 <div class="form-group col-md-6 pull-right">
                     <label for="input_iterations" class="control-label">Кiнцева</label>
-                    <input type="text" class="form-control " name="input_iterations" id="input_iterations" placeholder="Iterations" value="2500">
+                    <input type="text" class="form-control " name="input_iterations" id="input_iterations" placeholder="Iterations" value="25000">
                 </div>
                 <div class="form-group col-md-6 pull-right">
                     <label for="input_iterations" class="control-label">Початкова</label>
@@ -80,16 +118,15 @@
             <div class="col-md-12">
                 <div class="checkbox col-md-6">
                     <label>
-                        <input type="checkbox" id="sLHP" value="sLHP">sLHP</label>
+                        <input type="checkbox" id="sLHP" value="sLHP">Старший ЛХП</label>
                 </div>
                 <div id="sLHP_result" class="col-md-6">
-                    
                 </div>
             </div>
             <div class="col-md-12">
                 <div class="checkbox col-md-6">
                     <label>
-                        <input type="checkbox" id="LHPSpectre" value="LHPSpectre">LHPSpectre</label>
+                        <input type="checkbox" id="LHPSpectre" value="LHPSpectre">ЛХП спектр</label>
                 </div>
             </div>
             <div class="col-md-12">
@@ -113,12 +150,11 @@
             <div class="col-md-12">
                 <div class="checkbox col-md-6">
                     <label>
-                        <input type="checkbox" id="planeXY" value="planeXY">planeXY</label>
+                        <input type="checkbox" id="planeXY" value="planeXY">Відображення Пуанкаре</label>
                 </div>
                 <div class="form-group col-md-6">
                     <input type="text" class="form-control " name="input_planeXY" id="input_planeXY" placeholder="planeXY Z" value="0">
                 </div>
-
             </div>
         </div>
         <div class="col-md-12">
@@ -126,7 +162,7 @@
             <div class="form-group">
                 <label for="input_t" class="control-label col-xs-2">T</label>
                 <div class="col-xs-10">
-                    <input type="text" class="form-control " name="input_t" id="input_t" placeholder="T" value="0.1">
+                    <input type="text" class="form-control " name="input_t" id="input_t" placeholder="T" value="6.25">
                 </div>
             </div>
             <div class="form-group">
@@ -136,14 +172,14 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="input_h" class="control-label col-xs-2">Точнiсть Обчислень</label>
+                <label for="input_h" class="control-label col-xs-2">Крок Обчислень</label>
                 <div class="col-xs-10">
                     <input type="text" class="form-control " name="input_h" id="input_h" placeholder="Точнiсть Обчислень" value="0.01">
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-default">Побудувати</button>
-        <button class="btn btn-default">Зберегти</button>
+        <a id="build" class="btn btn-default">Побудувати</a>
+         
     </form>
     <!-- Plotly chart will be drawn inside this DIV -->
     <div id="myDiv" class="col-md-9"></div>
