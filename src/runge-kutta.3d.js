@@ -41,7 +41,7 @@ class RungeKutta4 {
         Object.assign(this, { X1, Y1, Z1, h });
         for (let n = _iterations_start; n < _iterations; n++) {
             let tmp = this.method();
-            if (isNaN(tmp.x) || isNaN(tmp.y) || isNaN(tmp.z)) { 
+            if (isNaN(tmp.x) || isNaN(tmp.y) || isNaN(tmp.z) || !isFinite(tmp.x) || !isFinite(tmp.y) || !isFinite(tmp.z)) { 
                 return arr;
             }
             arr.push(tmp);
